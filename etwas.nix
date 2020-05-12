@@ -1,4 +1,14 @@
-{ stdenv, coreutils }:
+{ stdenv
+
+, makeWrapper
+
+, coreutils
+, patchelf
+, gnused
+, gnugrep
+, findutils
+, nix
+}:
 
 stdenv.mkDerivation {
   pname = "etwas";
@@ -14,11 +24,23 @@ stdenv.mkDerivation {
 
   buildInputs = [
     coreutils
+    makeWrapper
   ];
 
   installPhase = ''
     mkdir -p ''${out}/bin
     cp ./etwas ''${out}/bin
+
+    wrapProgram \
+      $out/bin/etwas \
+      --prefix PATH : ${stdenv.lib.makeBinPath [
+        coreutils
+        patchelf
+        gnused
+        gnugrep
+        findutils
+        nix
+      ]}
   '';
 }
 
