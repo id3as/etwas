@@ -203,12 +203,21 @@ patch_script_file() {
       temp=$(mktemp)
 
       {
-        if [[ -z "${args}" ]]
-        then
-          echo "#!/usr/bin/env ${shell_name}"
-        else
-          echo "#!/usr/bin/env -S ${shell_name} ${args}"
-        fi
+        # Only available in coreutils 8.30 and later
+        # if [[ -z "${args}" ]]
+        # then
+        #   echo "#!/usr/bin/env ${shell_name}"
+        # else
+        #   echo "#!/usr/bin/env -S ${shell_name} ${args}"
+        # fi
+        case "${shell_name}" in
+          "sh")
+            echo "#!/bin/sh ${args}";;
+          "bash")
+            echo "#!/bin/bash ${args}";;
+          *)
+            echo "#!/usr/bin/${shell_name} ${args}";;
+        esac
 
         tail -n +2 "${file}"
       } > "${temp}"
