@@ -15,14 +15,19 @@ declare -r TRUE=0
 declare -r FALSE=1
 
 # ------------------------------------------------------------------------------
+# Args
+# ------------------------------------------------------------------------------
+declare g_arg_package=${1:-}
+declare g_arg_result_name=${2:-}
+
+# ------------------------------------------------------------------------------
 # Globals
 # ------------------------------------------------------------------------------
 # TODO: 32-bit interpreter?
 declare g_interpreter=/lib64/ld-linux-x86-64.so.2
-# TODO: custom store path
-declare g_store_path=/nix/store
-declare g_package=${1:-}
-declare g_result_name=${2:-}
+declare g_store_path=
+declare g_package=
+declare g_result_name=
 declare g_result_path=
 declare -a g_dependency_list=()
 declare -a g_dependency_skip_list=(glibc gcc alsa-lib freetype bash)
@@ -195,7 +200,7 @@ patch_script_file() {
   read -r old_interpreter args <<< "${old_interpreter_line}"
 
   case "${old_interpreter}" in
-    /nix/store/*)
+    "${g_store_path}/"*)
       local shell_name=
       shell_name=$(basename "${old_interpreter}")
 
@@ -375,16 +380,15 @@ check_bash_version() {
 }
 
 check_usage() {
-  if [[ -z "${g_package}" ]]
+  if [[ -z "${g_arg_package}" ]]
   then
     eprintf "No package specified.\n"
     exit ${EXIT_USAGE}
   fi
 
-  g_package=$(readlink --canonicalize "${g_package}")
+  g_package=$(readlink --canonicalize "${g_arg_package}")
 
-  g_result_name=${g_result_name:-$(basename "${g_package}")}
-
+  g_result_name=${g_arg_result_name:-$(basename "${g_package}")}
   g_result_path=${PWD}/${g_result_name}
 
   if [[ -e "${g_result_path}" ]]
@@ -392,6 +396,9 @@ check_usage() {
     eprintf "The result '%s' already exists, remove it first." "${g_result_path}"
     exit ${EXIT_EXISTS}
   fi
+
+  # shellcheck disable=SC2016
+  g_store_path=$(nix-shell --pure -p --run 'echo $NIX_STORE')
 
   return ${EXIT_OK}
 }
@@ -484,4 +491,9 @@ recursive_link() {
 # ------------------------------------------------------------------------------
 # Entry
 # ------------------------------------------------------------------------------
+if [[ -v ETWAS_DEBUG ]]
+then
+  set -x
+fi
+
 main
