@@ -480,7 +480,7 @@ recursive_link() {
 
     if [[ -f "${dir_entry}" ]];
     then
-      ln --symbolic --no-dereference "${relative_path}/${file_name}" "${dst_path}/${file_name}"
+      ln --force --symbolic --no-dereference "${relative_path}/${file_name}" "${dst_path}/${file_name}"
     elif [[ -d "${dir_entry}" ]];
     then
       recursiveLink "${dir_entry}" "${dst_path}/${file_name}"
